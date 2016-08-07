@@ -1,0 +1,159 @@
+<html>
+    <head>
+        <title>Customer Website</title>
+        <link rel="stylesheet" href="jtable.2.4.0/themes/jqueryui/themes/metroblue/jquery-ui.css">
+        <link rel="stylesheet" href="jtable.2.4.0/themes/lightcolor/gray/jtable.css">
+    </head>
+
+    <body>
+        <div id="TableContainer"></div>
+        <br/>
+        <br/>
+        <a href="blitz01_demo.html">Xfinity demo page</a>
+
+        <script src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
+        <script src="jtable.2.4.0/jquery-ui-1.10.0.min.js"></script>
+        <script src="jtable.2.4.0/jquery.jtable.js"></script>
+        <script type="text/javascript">
+            $(document).ready(function () {
+
+                var configStorageKey = 'configs';
+                //localStorage.removeItem(configStorageKey);
+
+                var selectedConfigStorageKey = 'selectedConfig';
+                var configsJSON = localStorage.getItem(configStorageKey);
+                var configs = [];
+                console.log('Configs found: ' + configsJSON);
+                if (!configsJSON) {
+                    console.log('reset');
+                    localStorage.setItem(configStorageKey, JSON.stringify(configs));
+                } else {
+                    configs = JSON.parse(configsJSON);
+                }
+
+                //Prepare jtable plugin
+                $('#TableContainer').jtable({
+                    title: 'Demo Configurations',
+                    paging: false,
+                    sorting: false,
+                    selecting: true, //Enable selecting
+                    multiselect: false, //Allow multiple selecting
+                    selectingCheckboxes: true, //Show checkboxes on first column
+                    //selectOnRowClick: false, //Enable this to only select using checkboxes
+                    actions: {
+                        listAction: function (postData, jtParams) {
+                            return {"Result":"OK",
+                                        "Records":configs,
+                                        "TotalRecordCount":configs.length};
+                        },
+                        deleteAction: function (postData) {
+                            console.log(postData);
+                            for (i=0; i<configs.length; i++) {
+                                if (configs[i].Name == postData.Name) {
+                                    configs.splice(i, 1);
+                                }
+                            }
+
+                            localStorage.setItem(configStorageKey, JSON.stringify(configs));
+                            return {"Result":"OK"};
+                        },
+                        createAction: function (postData) {
+                            console.log(postData);
+
+                            var result = {};
+                            postData.split('&').forEach(function(x){
+                                var arr = x.split('=');
+                                arr[1] && (result[arr[0]] = arr[1]);
+                            });
+
+                            var newRec = {"Name":result.Name, "LiveagentPod":result.LiveagentPod, "OrganizationId":result.OrganizationId, "DeploymentId":result.DeploymentId};
+                            configs.push(newRec);
+                            localStorage.setItem(configStorageKey, JSON.stringify(configs));
+                            return {"Result":"OK", "Record":newRec};
+                        },
+                        updateAction: function (postData) {
+                            console.log(postData);
+
+                            var result = {};
+                            postData.split('&').forEach(function(x){
+                                var arr = x.split('=');
+                                arr[1] && (result[arr[0]] = arr[1]);
+                            });
+
+                            for (i=0; i<configs.length; i++) {
+                                if (configs[i].Name == result.jtRecordKey) {
+                                    configs[i].Name = result.Name;
+                                    configs[i].LiveagentPod = result.LiveagentPod;
+                                    configs[i].OrganizationId = result.OrganizationId;
+                                    configs[i].DeploymentId = result.DeploymentId;
+                                }
+                            }
+
+                            localStorage.setItem(configStorageKey, JSON.stringify(configs));
+                            return {"Result":"OK"};
+                        }
+                    },
+                    fields: {
+                        Name: {
+                            key: true,
+                            edit: true,
+                            create: true,
+                            title: 'Name (Ensure Unique)',
+                            width: '20%',
+                            inputClass: 'validate[required]'
+                        },
+                        LiveagentPod: {
+                            title: 'LiveagentPod',
+                            width: '40%',
+                            inputClass: 'validate[required]'
+                        },
+                        OrganizationId: {
+                            title: 'OrganizationId',
+                            width: '20%',
+                            inputClass: 'validate[required]'
+                        },
+                        DeploymentId: {
+                            title: 'DeploymentId',
+                            width: '20%',
+                            inputClass: 'validate[required]'
+                        }
+                    },
+                    //Register to selectionChanged event to hanlde events
+                    selectionChanged: function () {
+                        //Get all selected rows
+                        var $selectedRows = $('#TableContainer').jtable('selectedRows');
+
+                        if ($selectedRows.length > 0) {
+                            //Show selected rows
+                            $selectedRows.each(function () {
+                                var record = $(this).data('record');
+                                console.log('Selection:' + JSON.stringify(record));
+                                localStorage.setItem(selectedConfigStorageKey, JSON.stringify(record));
+                            });
+                        }
+                    },
+                    rowInserted: function (event, data) {
+                        var selJSON = localStorage.getItem(selectedConfigStorageKey);
+                        var sel = null;
+                        if (selJSON) {
+                            sel = JSON.parse(selJSON);
+                            if (data.record.Name.indexOf(sel.Name) >= 0) {
+                                $('#TableContainer').jtable('selectRows', data.row);
+                            }
+                        }
+                    }
+                });
+
+                //Load student list from server
+                $('#TableContainer').jtable('load');
+
+            });
+
+        </script>
+    </body>
+</html>
+<style>
+      #TableContainer{
+            padding: 10px;
+      }
+</style>
