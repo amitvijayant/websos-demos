@@ -49,6 +49,9 @@
               SOS.session.join(code)
                 .then(function() {
                   console.log('joined');
+
+                  $joinBtn.attr("disabled","disabled");
+                  $code.attr("disabled","disabled");
                 })
                 .catch(function(err) {
                   console.log(err);
