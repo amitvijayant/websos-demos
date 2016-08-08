@@ -26,7 +26,7 @@
                 sel = JSON.parse(selJSON);
 
                 SOS.session.configure('#button_goes_here', {
-                    liveAgentPod: sel.LiveagentPod,
+                    liveAgentPod: 'https://' + sel.LiveagentPod,
                     organizationId: sel.OrganizationId,
                     deploymentId: sel.DeploymentId
                 });
