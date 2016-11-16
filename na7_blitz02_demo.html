@@ -1,0 +1,127 @@
+<html>
+    <head>
+        <title>Intuit TurboTax</title>
+        <link rel="stylesheet" href="https://na7-blitz02.soma.salesforce.com/sos/websos/sdk/css/sos.css">
+    </head>
+
+    <body>
+        <a href="configure.html" class="configure"></a>
+        <div class="pre-join"></div>
+
+        <div class="join" style="display: none;">
+            <span>Agent's code:</span> &nbsp;<input type="text" id="code" />&nbsp;<button id="join-btn">GO</button>
+        </div>
+
+        <div id="site_goes_here">
+            <iframe width="100%" height="100%" frameBorder="0" src="https://myturbotax.intuit.com/sign-up/"></iframe>
+        </div>
+        <script src="https://na7-blitz02.soma.salesforce.com/sos/websos/sdk/js/sos.js"></script>
+        <script src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
+        <script>
+          $(document).ready(function() {
+
+            var selJSON = localStorage.getItem('selectedConfig');
+            var sel = null;
+            if (selJSON) {
+                console.log('Selected config: ' + selJSON);
+                sel = JSON.parse(selJSON);
+
+                SOS.session.configure('#button_goes_here', {
+                    liveAgentPod: 'https://' + sel.LiveagentPod,
+                    organizationId: sel.OrganizationId,
+                    deploymentId: sel.DeploymentId
+                });
+            } else {
+                alert('No selected configuration found');
+            }
+
+            var $joinContainer = $('.join');
+            var $code = $joinContainer.find('#code');
+
+            var $joinBtn = $joinContainer.find('#join-btn');
+            $joinBtn.on('click', function() {
+              var code = $code.val();
+              if (!code) {
+                throw new Error('Missing code');
+              }
+
+              localStorage.setItem('connectionObject', '');
+
+              SOS.session.join(code)
+                .then(function() {
+                  console.log('joined');
+
+                  $joinBtn.attr("disabled","disabled");
+                  $code.attr("disabled","disabled");
+                })
+                .catch(function(err) {
+                  console.log(err);
+                })
+                .done();
+            });
+
+            $(".pre-join").click(function(){
+                SOS.session.joinDialog();
+                //$(".pre-join").hide();
+                //$(".join").show();
+            });
+          });
+        </script>
+    </body>
+</html>
+<style>
+      #site_goes_here{
+            width: 97%;
+            height: 100%;
+            margin: 0 auto;
+            position: relative;
+      }
+
+      .pre-join {
+            width: 40px;
+            height: 40px;
+            cursor: hand;
+            bottom: 20px;
+            position: fixed;
+            right: 20px;
+            display: block;
+            z-index: 999;
+            padding: 10px 20px;
+            background: url("help.png") no-repeat;
+            background-size: contain;
+      }
+      .pre-join:hover {
+            width: 60px;
+            height: 60px;
+      }
+
+      .configure {
+            width: 18px;
+            height: 18px;
+            cursor: hand;
+            top: 12px;
+            position: fixed;
+            right: 10px;
+            display: block;
+            z-index: 999;
+            background: url("configure.png") no-repeat;
+            background-size: contain;
+      }
+      .join {
+            bottom: 50px;
+            position: fixed;
+            right: 20px;
+            display: block;
+            z-index: 999;
+            padding: 20px 20px;
+            border-radius: 10px;
+            font-weight: bold;
+            background: green;
+            box-shadow: none;
+            text-align: center;
+      }
+
+      .join span {
+            color: #ffffff;
+      }
+</style>
